@@ -152,6 +152,11 @@ job-application-kanban/
 
 ---
 
+## 📸 项目展示
+
+![看板界面](./assets/demo1.png)
+![AI建议](./assets/demo2.png)
+
 ## 📊 产品迭代计划
 
 - [ ] v1.0 - 基础看板（当前版本）
