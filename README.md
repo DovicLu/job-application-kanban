@@ -155,6 +155,6 @@ MIT License · 欢迎 Fork 和二次开发
 
 ## 🙋 作者
 
-设计 & 开发：[Your Name]  
+设计 & 开发：[Dovic]  
 使用工具：Claude AI（Anthropic）辅助设计与代码生成  
 项目类型：课程作品 / 个人项目
