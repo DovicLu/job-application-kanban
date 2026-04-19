@@ -1,6 +1,9 @@
 # 求职申请管理看板 · Job Application Kanban
 
-> 一款专为大学生求职季设计的申请进度管理工具，帮助用户清晰掌控每一条投递的截止日期、材料提交状态与面试进度。
+> ## 🔍 项目简介
+本项目是一个基于看板（Kanban）思想的求职申请管理系统，结合前端交互设计与 AI 能力，实现对求职过程的结构化管理与智能辅助。
+
+相比传统表格工具，本系统通过可视化状态流转与 AI 建议机制，帮助用户在多任务、多阶段的求职过程中提升决策效率与执行效率。
 
 ![License](https://img.shields.io/badge/license-MIT-blue) ![Claude AI](https://img.shields.io/badge/Powered%20by-Claude%20AI-orange) ![Status](https://img.shields.io/badge/status-prototype-yellow)
 
