@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>求职申请管理看板</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f5f5f3; --surface: #ffffff; --surface2: #f0efeb;
+      --border: rgba(0,0,0,0.1); --border2: rgba(0,0,0,0.2);
+      --text: #1a1a1a; --text2: #666; --text3: #999;
+      --blue: #185FA5; --blue-bg: #E6F1FB;
+      --amber: #BA7517; --amber-bg: #FAEEDA;
+      --red: #A32D2D; --red-bg: #FCEBEB;
+      --green: #3B6D11; --green-bg: #EAF3DE;
+      --coral: #993C1D; --coral-bg: #FAECE7;
+      --radius: 8px; --radius-lg: 12px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:#1a1a18; --surface:#242422; --surface2:#2c2c2a;
+        --border:rgba(255,255,255,0.1); --border2:rgba(255,255,255,0.2);
+        --text:#f0ede8; --text2:#aaa; --text3:#666;
+        --blue-bg:#0C3460; --amber-bg:#3D2800; --red-bg:#3D1010;
+        --green-bg:#1A3308; --coral-bg:#3D1A0A;
+      }
+    }
+    body { font-family:-apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:24px 20px 60px; }
+    .header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+    .header-left h1 { font-size:22px; font-weight:600; }
+    .header-left p { font-size:13px; color:var(--text2); margin-top:3px; }
+    .header-date { font-size:12px; color:var(--text3); align-self:center; }
+    .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px; }
+    .stat { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius); padding:12px 14px; }
+    .stat-label { font-size:11px; color:var(--text2); text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
+    .stat-num { font-size:24px; font-weight:600; }
+    .alert { background:var(--red-bg); border:0.5px solid #F09595; border-radius:var(--radius); padding:9px 13px; margin-bottom:18px; font-size:12px; color:var(--red); display:flex; align-items:center; gap:7px; }
+    .alert-icon { width:16px; height:16px; border-radius:50%; background:var(--red); color:#fff; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; flex-shrink:0; }
+    .toolbar { display:flex; align-items:center; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
+    .search { flex:1; min-width:140px; max-width:220px; padding:7px 11px; font-size:13px; border:0.5px solid var(--border2); border-radius:var(--radius); background:var(--surface); color:var(--text); outline:none; }
+    .search:focus { border-color:var(--blue); }
+    .filter-btn { padding:6px 13px; font-size:12px; border:0.5px solid var(--border); border-radius:var(--radius); background:var(--surface); color:var(--text2); cursor:pointer; transition:all .15s; }
+    .filter-btn.active { background:var(--blue-bg); color:var(--blue); border-color:var(--blue); }
+    .filter-btn:hover:not(.active) { background:var(--surface2); }
+    .add-btn { margin-left:auto; padding:7px 15px; font-size:13px; border:0.5px solid var(--border2); border-radius:var(--radius); background:var(--text); color:var(--surface); cursor:pointer; font-weight:500; }
+    .add-btn:hover { opacity:.8; }
+    .board { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; align-items:start; }
+    @media(max-width:900px){.board{grid-template-columns:repeat(3,1fr);}}
+    @media(max-width:600px){.board{grid-template-columns:1fr 1fr;}.stats{grid-template-columns:1fr 1fr;}}
+    .column { background:var(--surface2); border-radius:var(--radius-lg); padding:10px; min-height:180px; }
+    .col-header { display:flex; align-items:center; gap:6px; margin-bottom:10px; padding:0 2px; }
+    .col-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .col-title { font-size:12px; font-weight:500; color:var(--text2); flex:1; }
+    .col-count { font-size:11px; color:var(--text3); background:var(--surface); border-radius:10px; padding:1px 7px; border:0.5px solid var(--border); }
+    .card { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius); padding:10px 11px; margin-bottom:8px; cursor:pointer; transition:border-color .15s,transform .1s; }
+    .card:hover { border-color:var(--border2); transform:translateY(-1px); }
+    .card:last-child { margin-bottom:0; }
+    .card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:6px; margin-bottom:2px; }
+    .card-company { font-size:13px; font-weight:600; }
+    .job-link { font-size:10px; color:var(--blue); text-decoration:none; white-space:nowrap; padding:2px 6px; border:0.5px solid var(--blue); border-radius:6px; flex-shrink:0; }
+    .job-link:hover { background:var(--blue-bg); }
+    .card-role { font-size:12px; color:var(--text2); margin-bottom:8px; }
+    .card-meta { display:flex; flex-wrap:wrap; gap:4px; }
+    .badge { display:inline-flex; align-items:center; font-size:10px; padding:2px 7px; border-radius:10px; font-weight:500; white-space:nowrap; }
+    .badge-type{background:var(--blue-bg);color:var(--blue);}
+    .badge-dl{background:var(--amber-bg);color:var(--amber);}
+    .badge-urgent{background:var(--red-bg);color:var(--red);}
+    .badge-offer{background:var(--green-bg);color:var(--green);}
+    .badge-reject{background:var(--coral-bg);color:var(--coral);}
+    .badge-pending{background:var(--surface2);color:var(--text2);border:0.5px solid var(--border);}
+    .progress-wrap{margin-top:8px;}
+    .progress-label{font-size:10px;color:var(--text3);margin-bottom:3px;}
+    .progress-track{height:3px;background:var(--surface2);border-radius:2px;overflow:hidden;}
+    .progress-fill{height:100%;border-radius:2px;transition:width .3s;}
+    .checklist{margin-top:8px;border-top:0.5px solid var(--border);padding-top:8px;}
+    .cl-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);margin-bottom:3px;}
+    .cl-item:last-child{margin-bottom:0;}
+    .chk-box{width:12px;height:12px;border-radius:3px;border:0.5px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .chk-box.done{background:var(--green);border-color:var(--green);}
+    .chk-box.done::after{content:'';display:block;width:6px;height:4px;border-left:1.5px solid #fff;border-bottom:1.5px solid #fff;transform:rotate(-45deg) translateY(-1px);}
+    .interview-row{margin-top:8px;border-top:0.5px solid var(--border);padding-top:8px;font-size:11px;color:var(--text2);display:flex;align-items:center;gap:5px;}
+    .interview-dot{width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;}
+    .empty-col{text-align:center;padding:24px 8px;font-size:12px;color:var(--text3);}
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.35);display:none;align-items:center;justify-content:center;z-index:100;}
+    .overlay.open{display:flex;}
+    .modal{background:var(--surface);border-radius:var(--radius-lg);border:0.5px solid var(--border);padding:1.5rem;width:380px;max-width:92vw;max-height:90vh;overflow-y:auto;}
+    .modal h2{font-size:16px;font-weight:600;margin-bottom:1rem;}
+    .form-group{margin-bottom:13px;}
+    .form-label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px;}
+    .form-input,.form-select{width:100%;padding:8px 10px;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);outline:none;}
+    .form-input:focus,.form-select:focus{border-color:var(--blue);}
+    .form-hint{font-size:11px;color:var(--text3);margin-top:3px;}
+    .modal-actions{display:flex;gap:8px;margin-top:1rem;}
+    .btn-ok{flex:1;padding:9px;font-size:13px;border:none;border-radius:var(--radius);background:var(--text);color:var(--surface);cursor:pointer;font-weight:500;}
+    .btn-cancel{padding:9px 16px;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--radius);background:transparent;color:var(--text2);cursor:pointer;}
+    .ai-panel{position:fixed;right:0;top:0;bottom:0;width:340px;background:var(--surface);border-left:0.5px solid var(--border);display:none;flex-direction:column;z-index:200;overflow:hidden;}
+    .ai-panel.open{display:flex;}
+    .ai-panel-head{padding:16px 16px 12px;border-bottom:0.5px solid var(--border);display:flex;align-items:flex-start;gap:10px;}
+    .ai-panel-info{flex:1;}
+    .ai-panel-company{font-size:14px;font-weight:600;}
+    .ai-panel-role{font-size:12px;color:var(--text2);margin-top:1px;}
+    .ai-close{font-size:12px;color:var(--text3);cursor:pointer;padding:2px 6px;border-radius:4px;flex-shrink:0;}
+    .ai-close:hover{background:var(--surface2);}
+    .ai-tabs{display:flex;border-bottom:0.5px solid var(--border);}
+    .ai-tab{flex:1;padding:9px;font-size:12px;text-align:center;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;transition:all .15s;}
+    .ai-tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:500;}
+    .ai-tab:hover:not(.active){background:var(--surface2);}
+    .ai-body{flex:1;overflow-y:auto;padding:14px 16px;}
+    .ai-section{margin-bottom:16px;}
+    .ai-section-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;}
+    .ai-text{font-size:13px;color:var(--text2);line-height:1.75;white-space:pre-wrap;}
+    .ai-loading{font-size:13px;color:var(--text3);display:flex;align-items:center;gap:6px;}
+    .ai-loading::before{content:'';width:12px;height:12px;border:1.5px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .niuke-card{background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px;text-decoration:none;display:block;transition:border-color .15s;}
+    .niuke-card:hover{border-color:var(--border2);}
+    .niuke-card-title{font-size:13px;color:var(--blue);font-weight:500;margin-bottom:3px;line-height:1.4;}
+    .niuke-card-meta{font-size:11px;color:var(--text3);}
+    .niuke-search-btn{display:block;width:100%;padding:9px;font-size:13px;border:0.5px solid var(--blue);border-radius:var(--radius);background:var(--blue-bg);color:var(--blue);cursor:pointer;text-align:center;text-decoration:none;font-weight:500;margin-top:10px;}
+    .niuke-search-btn:hover{opacity:.8;}
+    .job-url-link{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--blue);text-decoration:none;}
+    .job-url-link:hover{text-decoration:underline;}
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>求职申请看板</h1>
+    <p>2025 届春季招聘</p>
+  </div>
+  <div class="header-date" id="today-date"></div>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="stat-label">投递总数</div><div class="stat-num" id="s-total" style="color:var(--blue)">0</div></div>
+  <div class="stat"><div class="stat-label">紧急截止 ≤7天</div><div class="stat-num" id="s-urgent" style="color:var(--amber)">0</div></div>
+  <div class="stat"><div class="stat-label">面试安排</div><div class="stat-num" id="s-interview" style="color:var(--blue)">0</div></div>
+  <div class="stat"><div class="stat-label">已获 Offer</div><div class="stat-num" id="s-offer" style="color:var(--green)">0</div></div>
+</div>
+
+<div class="alert" id="alert-bar" style="display:none;">
+  <div class="alert-icon">!</div>
+  <span id="alert-text"></span>
+</div>
+
+<div class="toolbar">
+  <input class="search" id="searchInput" placeholder="搜索公司或职位…" oninput="render()" />
+  <button class="filter-btn active" onclick="setFilter(this,'all')">全部</button>
+  <button class="filter-btn" onclick="setFilter(this,'技术')">技术</button>
+  <button class="filter-btn" onclick="setFilter(this,'产品')">产品</button>
+  <button class="filter-btn" onclick="setFilter(this,'运营')">运营</button>
+  <button class="filter-btn" onclick="setFilter(this,'设计')">设计</button>
+  <button class="add-btn" onclick="openModal()">+ 新增申请</button>
+</div>
+
+<div class="board">
+  <div class="column" id="col-0"><div class="col-header"><div class="col-dot" style="background:#B4B2A9"></div><div class="col-title">待投递</div><div class="col-count" id="cnt-0">0</div></div></div>
+  <div class="column" id="col-1"><div class="col-header"><div class="col-dot" style="background:#378ADD"></div><div class="col-title">已投递</div><div class="col-count" id="cnt-1">0</div></div></div>
+  <div class="column" id="col-2"><div class="col-header"><div class="col-dot" style="background:#EF9F27"></div><div class="col-title">笔试 / 测评</div><div class="col-count" id="cnt-2">0</div></div></div>
+  <div class="column" id="col-3"><div class="col-header"><div class="col-dot" style="background:#7F77DD"></div><div class="col-title">面试中</div><div class="col-count" id="cnt-3">0</div></div></div>
+  <div class="column" id="col-4"><div class="col-header"><div class="col-dot" style="background:#639922"></div><div class="col-title">结果</div><div class="col-count" id="cnt-4">0</div></div></div>
+</div>
+
+<div class="overlay" id="modal">
+  <div class="modal">
+    <h2>新增申请</h2>
+    <div class="form-group"><label class="form-label">公司名称 *</label><input class="form-input" id="f-company" placeholder="例：腾讯"></div>
+    <div class="form-group"><label class="form-label">职位名称 *</label><input class="form-input" id="f-role" placeholder="例：产品经理实习生"></div>
+    <div class="form-group"><label class="form-label">职位类型</label>
+      <select class="form-select" id="f-type"><option>技术</option><option>产品</option><option>运营</option><option>设计</option><option>数据</option><option>其他</option></select>
+    </div>
+    <div class="form-group"><label class="form-label">截止日期</label><input class="form-input" id="f-deadline" type="date"></div>
+    <div class="form-group">
+      <label class="form-label">岗位 JD 链接（可选）</label>
+      <input class="form-input" id="f-joburl" placeholder="https://...">
+      <div class="form-hint">填写后卡片右上角会出现「查看 JD」按钮</div>
+    </div>
+    <div class="form-group"><label class="form-label">当前阶段</label>
+      <select class="form-select" id="f-stage"><option value="0">待投递</option><option value="1">已投递</option><option value="2">笔试 / 测评</option><option value="3">面试中</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn-ok" onclick="addApp()">添加申请</button>
+    </div>
+  </div>
+</div>
+
+<div class="ai-panel" id="ai-panel">
+  <div class="ai-panel-head">
+    <div class="ai-panel-info">
+      <div class="ai-panel-company" id="ai-company"></div>
+      <div class="ai-panel-role" id="ai-role"></div>
+    </div>
+    <span class="ai-close" onclick="closeAI()">✕ 关闭</span>
+  </div>
+  <div class="ai-tabs">
+    <div class="ai-tab active" id="tab-advice" onclick="switchTab('advice')">AI 备考建议</div>
+    <div class="ai-tab" id="tab-niuke" onclick="switchTab('niuke')">牛客面经</div>
+  </div>
+  <div class="ai-body" id="ai-body"></div>
+</div>
+
+<script>
+const STAGE_COLORS=['#B4B2A9','#378ADD','#EF9F27','#7F77DD','#639922'];
+const STAGE_LABELS=['待投递','已投递','笔试 / 测评','面试中','结果'];
+let filterType='all', currentAppId=null, currentTab='advice';
+const adviceCache={}, niukeCache={};
+
+let apps=[
+  {id:1,company:'字节跳动',role:'产品经理实习',type:'产品',stage:2,deadline:'2025-04-21',jobUrl:'https://jobs.bytedance.com/',checklist:['网申已提交','性格测试','逻辑测试','专业测验'],checked:[0,1],interview:null,result:null},
+  {id:2,company:'腾讯',role:'后端开发工程师',type:'技术',stage:3,deadline:'2025-04-28',jobUrl:'https://join.qq.com/',checklist:['简历投递','笔试','一面','二面'],checked:[0,1,2],interview:'4月25日 14:00 · 二面（技术）',result:null},
+  {id:3,company:'阿里巴巴',role:'数据分析实习',type:'数据',stage:1,deadline:'2025-04-26',jobUrl:'https://talent.alibaba.com/',checklist:['网申','简历筛选'],checked:[0],interview:null,result:null},
+  {id:4,company:'美团',role:'运营策略实习',type:'运营',stage:3,deadline:'2025-05-05',jobUrl:'https://zhaopin.meituan.com/',checklist:['投递','笔试','HR面','业务面'],checked:[0,1,2],interview:'4月23日 10:30 · 业务面',result:null},
+  {id:5,company:'网易',role:'游戏产品经理',type:'产品',stage:1,deadline:'2025-04-30',jobUrl:'https://campus.163.com/',checklist:['网申','性格测试'],checked:[0],interview:null,result:null},
+  {id:6,company:'华为',role:'软件工程师',type:'技术',stage:2,deadline:'2025-04-24',jobUrl:'https://career.huawei.com/',checklist:['简历投递','机考'],checked:[0],interview:null,result:null},
+  {id:7,company:'京东',role:'供应链运营',type:'运营',stage:4,deadline:'2025-04-10',jobUrl:'',checklist:['投递','笔试','面试','Offer'],checked:[0,1,2,3],interview:null,result:'offer'},
+  {id:8,company:'滴滴',role:'前端开发实习',type:'技术',stage:4,deadline:'2025-04-05',jobUrl:'',checklist:['投递','笔试','面试','结果'],checked:[0,1,2,3],interview:null,result:'rejected'},
+];
+
+function daysLeft(ds){const t=new Date();t.setHours(0,0,0,0);return Math.ceil((new Date(ds)-t)/86400000);}
+
+function renderCard(a){
+  const dl=daysLeft(a.deadline);
+  const dlText=dl<0?'已截止':dl===0?'今天截止':`${dl}天后截止`;
+  const urgent=dl>=0&&dl<=3;
+  const pct=a.checklist?Math.round(a.checked.length/a.checklist.length*100):0;
+  const jobLinkHtml=a.jobUrl?`<a class="job-link" href="${a.jobUrl}" target="_blank" onclick="event.stopPropagation()">查看 JD ↗</a>`:'';
+  let checkHtml='';
+  if(a.checklist&&a.stage<4){
+    checkHtml=`<div class="progress-wrap"><div class="progress-label">${a.checked.length}/${a.checklist.length} 完成</div><div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:${STAGE_COLORS[a.stage]}"></div></div></div><div class="checklist">${a.checklist.map((item,i)=>{const done=a.checked.includes(i);return`<div class="cl-item"><div class="chk-box ${done?'done':''}"></div><span style="${done?'text-decoration:line-through;opacity:0.5':''}">${item}</span></div>`;}).join('')}</div>`;
+  }
+  let resultBadge='';
+  if(a.stage===4){
+    if(a.result==='offer')resultBadge=`<span class="badge badge-offer">已获 Offer</span>`;
+    else if(a.result==='rejected')resultBadge=`<span class="badge badge-reject">未通过</span>`;
+    else resultBadge=`<span class="badge badge-pending">等待结果</span>`;
+  }
+  const ivHtml=a.interview?`<div class="interview-row"><div class="interview-dot"></div>${a.interview}</div>`:'';
+  return `<div class="card" onclick="openAI(${a.id})"><div class="card-top"><div class="card-company">${a.company}</div>${jobLinkHtml}</div><div class="card-role">${a.role}</div><div class="card-meta"><span class="badge badge-type">${a.type}</span>${a.stage<4?`<span class="badge ${urgent?'badge-urgent':'badge-dl'}">${dlText}</span>`:''}${resultBadge}</div>${checkHtml}${ivHtml}</div>`;
+}
+
+function render(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  let urgent=0,interviews=0,offers=0;
+  apps.forEach(a=>{const dl=daysLeft(a.deadline);if(dl>=0&&dl<=7&&a.stage<4)urgent++;if(a.interview)interviews++;if(a.result==='offer')offers++;});
+  document.getElementById('s-total').textContent=apps.length;
+  document.getElementById('s-urgent').textContent=urgent;
+  document.getElementById('s-interview').textContent=interviews;
+  document.getElementById('s-offer').textContent=offers;
+  const ua=apps.filter(a=>daysLeft(a.deadline)>=0&&daysLeft(a.deadline)<=3&&a.stage<4);
+  const ab=document.getElementById('alert-bar');
+  if(ua.length>0){ab.style.display='flex';document.getElementById('alert-text').innerHTML=`<strong>${ua[0].company}</strong> 截止仅剩 <strong>${daysLeft(ua[0].deadline)} 天</strong>，请尽快处理`;}
+  else{ab.style.display='none';}
+  for(let s=0;s<=4;s++){
+    const col=document.getElementById('col-'+s);
+    col.querySelectorAll('.card,.empty-col').forEach(c=>c.remove());
+    const filtered=apps.filter(a=>a.stage===s&&(filterType==='all'||a.type===filterType)&&(!q||a.company.includes(q)||a.role.includes(q)));
+    document.getElementById('cnt-'+s).textContent=filtered.length;
+    if(filtered.length===0)col.insertAdjacentHTML('beforeend',`<div class="empty-col">暂无申请</div>`);
+    else filtered.forEach(a=>col.insertAdjacentHTML('beforeend',renderCard(a)));
+  }
+}
+
+function setFilter(btn,type){filterType=type;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');render();}
+function openModal(){document.getElementById('f-deadline').value=new Date().toISOString().split('T')[0];document.getElementById('modal').classList.add('open');}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+function addApp(){
+  const company=document.getElementById('f-company').value.trim();
+  const role=document.getElementById('f-role').value.trim();
+  if(!company||!role){alert('请填写公司名称和职位名称');return;}
+  apps.push({id:Date.now(),company,role,type:document.getElementById('f-type').value,stage:parseInt(document.getElementById('f-stage').value),deadline:document.getElementById('f-deadline').value||'2025-06-30',jobUrl:document.getElementById('f-joburl').value.trim(),checklist:['网申/简历投递'],checked:[],interview:null,result:null});
+  closeModal();['f-company','f-role','f-joburl'].forEach(id=>document.getElementById(id).value='');
+  render();
+}
+
+function openAI(id){
+  const a=apps.find(x=>x.id===id);if(!a)return;
+  currentAppId=id;
+  document.getElementById('ai-company').textContent=a.company;
+  document.getElementById('ai-role').textContent=`${a.role} · ${STAGE_LABELS[a.stage]}`;
+  document.getElementById('ai-panel').classList.add('open');
+  switchTab(currentTab);
+}
+
+function switchTab(tab){
+  currentTab=tab;
+  document.getElementById('tab-advice').classList.toggle('active',tab==='advice');
+  document.getElementById('tab-niuke').classList.toggle('active',tab==='niuke');
+  const a=apps.find(x=>x.id===currentAppId);if(!a)return;
+  if(tab==='advice')loadAdvice(a);else loadNiuke(a);
+}
+
+async function loadAdvice(a){
+  const body=document.getElementById('ai-body');
+  const key=`${a.id}-${a.stage}`;
+  if(adviceCache[key]){body.innerHTML=renderAdviceHtml(adviceCache[key],a);return;}
+  body.innerHTML=`<div class="ai-loading">正在生成备考建议…</div>`;
+  const dl=daysLeft(a.deadline);
+  const prompt=`申请记录：\n- 公司：${a.company}\n- 职位：${a.role}（${a.type}方向）\n- 当前阶段：${STAGE_LABELS[a.stage]}\n- 截止日期：${a.deadline}（${dl>=0?`还剩 ${dl} 天`:'已过期'}）\n- 材料完成度：${a.checked.length}/${a.checklist?a.checklist.length:1}\n${a.interview?`- 面试安排：${a.interview}`:''}\n${a.result?`- 结果：${a.result==='offer'?'已获 Offer':'未通过'}`:''}\n\n请针对当前阶段给出 2-3 条最重要的行动建议，简洁具体，总字数不超过 200 字。`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'你是一位专业的校招求职顾问，帮助大学生管理求职申请进度，给出简洁可执行的建议。',messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    const text=data.content?.map(c=>c.text||'').join('')||'暂时无法获取建议';
+    adviceCache[key]=text;body.innerHTML=renderAdviceHtml(text,a);
+  }catch(e){
+    const fb=`处于「${STAGE_LABELS[a.stage]}」阶段建议：\n\n• 确认材料是否齐全\n• 关注官方渠道通知\n• 提前准备下一阶段内容\n\n（配置 API Key 后可获得个性化建议）`;
+    adviceCache[key]=fb;body.innerHTML=renderAdviceHtml(fb,a);
+  }
+}
+
+function renderAdviceHtml(text,a){
+  let html=`<div class="ai-section"><div class="ai-section-title">行动建议</div><div class="ai-text">${text}</div></div>`;
+  if(a.jobUrl){html+=`<div class="ai-section"><div class="ai-section-title">岗位链接</div><a class="job-url-link" href="${a.jobUrl}" target="_blank">查看官方 JD ↗</a></div>`;}
+  return html;
+}
+
+async function loadNiuke(a){
+  const body=document.getElementById('ai-body');
+  const key=`${a.company}-${a.role}`;
+  if(niukeCache[key]){body.innerHTML=renderNiukeHtml(niukeCache[key],a);return;}
+  body.innerHTML=`<div class="ai-loading">正在搜索牛客面经…</div>`;
+  const searchUrl=`https://www.nowcoder.com/search?query=${encodeURIComponent(a.company+' '+a.role)}&type=post`;
+  const prompt=`请搜索牛客网上"${a.company} ${a.role}"的面经帖子，返回 4 条最相关的结果。严格按以下 JSON 格式返回，不要有其他文字或 markdown：[{"title":"帖子标题","url":"帖子链接","summary":"一句话摘要不超过20字"}]`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,tools:[{type:'web_search_20250305',name:'web_search'}],system:'你是求职助手，帮用户找牛客网面经。只返回 JSON 数组，绝对不要输出其他任何内容。',messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    const text=data.content?.filter(c=>c.type==='text').map(c=>c.text).join('')||'[]';
+    let posts=[];
+    try{posts=JSON.parse(text.replace(/```json|```/g,'').trim());}catch(e){posts=[];}
+    niukeCache[key]=posts;body.innerHTML=renderNiukeHtml(posts,a);
+  }catch(e){niukeCache[key]=[];body.innerHTML=renderNiukeHtml([],a);}
+}
+
+function renderNiukeHtml(posts,a){
+  const searchUrl=`https://www.nowcoder.com/search?query=${encodeURIComponent(a.company+' '+a.role)}&type=post`;
+  let html=`<div class="ai-section"><div class="ai-section-title">${a.company} · ${a.role} 面经推荐</div>`;
+  if(posts.length>0){
+    posts.forEach(p=>{html+=`<a class="niuke-card" href="${p.url||searchUrl}" target="_blank"><div class="niuke-card-title">${p.title}</div><div class="niuke-card-meta">${p.summary||'点击查看详情'}</div></a>`;});
+  }else{
+    html+=`<div class="ai-text" style="margin-bottom:12px;color:var(--text3);">配置 API Key 后可自动推荐面经，点击下方直接搜索：</div>`;
+  }
+  html+=`<a class="niuke-search-btn" href="${searchUrl}" target="_blank">在牛客网搜索更多面经 ↗</a></div>`;
+  return html;
+}
+
+function closeAI(){document.getElementById('ai-panel').classList.remove('open');}
+
+const now=new Date();
+document.getElementById('today-date').textContent=`${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+render();
+</script>
+</body>
+</html>
