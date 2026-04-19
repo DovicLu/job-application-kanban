@@ -201,7 +201,9 @@
   </div>
   <div class="ai-body" id="ai-body"></div>
 </div>
-
+  
+<script src="./config.js"></script>
+  
 <script>
 const STAGE_COLORS=['#B4B2A9','#378ADD','#EF9F27','#7F77DD','#639922'];
 const STAGE_LABELS=['待投递','已投递','笔试 / 测评','面试中','结果'];
@@ -300,7 +302,7 @@ async function loadAdvice(a){
   const dl=daysLeft(a.deadline);
   const prompt=`申请记录：\n- 公司：${a.company}\n- 职位：${a.role}（${a.type}方向）\n- 当前阶段：${STAGE_LABELS[a.stage]}\n- 截止日期：${a.deadline}（${dl>=0?`还剩 ${dl} 天`:'已过期'}）\n- 材料完成度：${a.checked.length}/${a.checklist?a.checklist.length:1}\n${a.interview?`- 面试安排：${a.interview}`:''}\n${a.result?`- 结果：${a.result==='offer'?'已获 Offer':'未通过'}`:''}\n\n请针对当前阶段给出 2-3 条最重要的行动建议，简洁具体，总字数不超过 200 字。`;
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'你是一位专业的校招求职顾问，帮助大学生管理求职申请进度，给出简洁可执行的建议。',messages:[{role:'user',content:prompt}]})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers: {'Content-Type': 'application/json','x-api-key': CONFIG.ANTHROPIC_API_KEY,'anthropic-version': '2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'你是一位专业的校招求职顾问，帮助大学生管理求职申请进度，给出简洁可执行的建议。',messages:[{role:'user',content:prompt}]})});
     const data=await res.json();
     const text=data.content?.map(c=>c.text||'').join('')||'暂时无法获取建议';
     adviceCache[key]=text;body.innerHTML=renderAdviceHtml(text,a);
@@ -324,7 +326,7 @@ async function loadNiuke(a){
   const searchUrl=`https://www.nowcoder.com/search?query=${encodeURIComponent(a.company+' '+a.role)}&type=post`;
   const prompt=`请搜索牛客网上"${a.company} ${a.role}"的面经帖子，返回 4 条最相关的结果。严格按以下 JSON 格式返回，不要有其他文字或 markdown：[{"title":"帖子标题","url":"帖子链接","summary":"一句话摘要不超过20字"}]`;
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,tools:[{type:'web_search_20250305',name:'web_search'}],system:'你是求职助手，帮用户找牛客网面经。只返回 JSON 数组，绝对不要输出其他任何内容。',messages:[{role:'user',content:prompt}]})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers: {'Content-Type': 'application/json','x-api-key': CONFIG.ANTHROPIC_API_KEY,'anthropic-version': '2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,tools:[{type:'web_search_20250305',name:'web_search'}],system:'你是求职助手，帮用户找牛客网面经。只返回 JSON 数组，绝对不要输出其他任何内容。',messages:[{role:'user',content:prompt}]})});
     const data=await res.json();
     const text=data.content?.filter(c=>c.type==='text').map(c=>c.text).join('')||'[]';
     let posts=[];
